@@ -1,0 +1,138 @@
+---
+layout: post
+title: "P6610 [Code+#7] 同余方程 题解"
+date: 2025-8-3
+tags: ["数学", "数论", "Legendre 符号", "二次剩余", "7.2"]
+comments: true
+author: a06180339
+---
+
+
+一道关于 Legendre 符号的推式子好题。
+首先引入 Legendre 符号。定义 Legendre 符号 $\dbinom{a}{p} = \begin{cases} 0 & \gcd (a,p) \ne 1 \\ 1 & \gcd (a,p) = 1 \land ((\exists x \in \text Z) x^2 \equiv a \pmod p) \\ -1 & Otherwise \end{cases}$
+
+说人话就是，对于 $a$，$p$ 不互质，$\dbinom{a}{p} = 0$。否则当 $a$ 是模 $p$ 的二次剩余时，$\dbinom{a}{p} = 1$，否则 $\dbinom{a}{p} = -1$。
+
+Legendre 符号有很多性质。例如对于 $p \in \text P, \dbinom{a}{p} = {a}^{\frac{(p - 1)}{2}} \mod p$。晚点推式子的时候会用。
+
+让我们先将题面用数学语言翻译一遍。给定 $p,x$，求 $\sum_{i=0}^{p-1} \sum_{j=0}^{p-1} [i^2 + j^2 \equiv x \pmod p]$。
+
+注意到 $p$ 的每个质因子幂次都为 1，所以可以将 $p$ 分解质因数，然后再将每个质因数的答案乘起来，就是原本的答案。
+
+先开始简化式子。尝试枚举 $i^2$ 而非 $i$。对于 $\dbinom{i}{p} = 1$ 的情况满足 $x^2 = i \pmod p$ 的解有两个。对于 $\dbinom{i}{p} = -1$ 的情况满足 $x^2 = i \pmod p$ 的解有零个。对于 $\dbinom{i}{p} = 0$ 的情况满足 $x^2 = i \pmod p$ 的解有一个。$\dbinom{i}{p} = 0$ 有一组解是因为此时 $i = 0$，只有 $0^2 \equiv 0 \pmod p$。总结一下，满足 $x^2 = i \pmod p$ 的解有 $\dbinom{i}{p} + 1$ 个。所以原式就等于 $\sum_{i=0}^{p-1} (\dbinom{i}{p} + 1)(\dbinom{x - i}{p} + 1)$。
+
+现在，我们要用到 Legendre 符号的其中一个性质了。$\sum_{i=1}^{p-1} \dbinom{i}{p} = 0$。也就是 $1 \cdots p - 1$ 中有一半的数有二次剩余，另一半没有。分析一下原式，$\sum_{i=0}^{p-1} (\dbinom{i}{p} + 1)(\dbinom{x - i}{p} + 1) = \sum_{i=0}^{p-1} (\dbinom{i}{p}\dbinom{x - i}{p} + \dbinom{i}{p} + \dbinom{x - i}{p} + 1)$
+
+根据前面提到的性质，$\sum_{i=0}^{p-1} (\dbinom{i}{p} + \dbinom{x - i}{p} + 1) = p$。所以原式等于 $\sum_{i=0}^{p-1} \dbinom{i}{p}\dbinom{x - i}{p}$。
+
+现在，开始用另一个性质。Lengendre 符号是完全积性的。也就是 $\dbinom{i}{p}\dbinom{j}{p} = \dbinom{ij}{p}$。证明显然。
+
+所以将原式两边乘起来，得原式 $=\sum_{i=0}^{p-1} \dbinom{xi - i^2}{p}$。提出 $i^2$，则原式 $=\sum_{i=1}^{p-1} \dbinom{\frac{x}{i} - 1}{p}$。显然，$\frac{x}{i}$ 能取遍 $1 \cdots p - 1$，所以 $\frac{x}{i} - 1$ 能取遍 $0 \cdots p - 2$。所以 $=\sum_{i=1}^{p-1} \dbinom{\frac{x}{i} - 1}{p} = -\dbinom{-1}{p}$
+
+当然，对于 $x = 0$，原式为 $\dbinom{-1}{p} \times (p - 1)$
+
+总结：当 $x \ne 0$，答案为 $p - \dbinom{-1}{p}$。当 $x = 0$，答案为 $p + (p - 1) \times \dbinom{-1}{p}$
+
+最后的式子用 $\dbinom{a}{p} = {a}^{\frac{(p - 1)}{2}} \mod p$ 直接算即可。
+
+代码：
+
+```cpp
+#include <bits/stdc++.h>
+
+using namespace std;
+
+  
+
+typedef long long ll;
+
+  
+
+const ll Pig = 1e7 + 10;
+
+  
+
+ll mn_pr[Pig];
+
+vector<ll> pr;
+
+bitset<Pig> p;
+
+  
+
+void sieve(ll n = Pig - 1) {
+
+    for (ll i = 2; i < n; i++) {
+
+        if (!p[i])
+
+            pr.emplace_back(i), mn_pr[i] = i;
+
+        for (ll j : pr) {
+
+            if (i * j > n)
+
+                break;
+
+            p[i * j] = 1;
+
+            mn_pr[i * j] = j;
+
+            if (i % j == 0)
+
+                break;
+
+        }
+
+    }
+
+}
+
+  
+
+ll cal(ll x, ll p) {
+
+    ll f = 1;
+
+    if (!x)
+
+        f = p - 1;
+
+    f = f * (2 * ((((p - 1) / 2) & 1) ^ (!x)) - 1);
+
+    return f + p;
+
+}
+
+  
+
+int main() {
+
+    ios::sync_with_stdio(0);
+
+    cin.tie(0);
+
+    //freopen("a.in", "r", stdin);
+
+    sieve();
+
+    ll t;
+
+    cin >> t;
+
+    for (; t; t--) {
+
+        ll ans = 1, x, p;
+
+        cin >> p >> x;
+
+        while (p != 1)
+
+            ans *= cal(x % mn_pr[p], mn_pr[p]), p /= mn_pr[p];
+
+        cout << ans << "\n";
+
+    }
+
+}
+```
