@@ -11,6 +11,8 @@ navigation:
     url: /about
   - name: 分类
     url: /tags
+  - name: 游戏
+    url: /OItrainer/start.html
 
 paginate: 8
 
